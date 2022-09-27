@@ -10,7 +10,7 @@ snscrape.base.Scraper._request = scraping_request
 
 class Scrapper:
 
-    TWEETS_LIMIT = 100
+    TWEETS_LIMIT = 1
 
     @staticmethod
     def __getUsername(url: str) -> str:

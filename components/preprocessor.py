@@ -1,5 +1,5 @@
 import json
-from .tokenizer import Tokenizer
+from tokenizer import Tokenizer
 
 
 def getProcessedData(data: str) -> list[str]:
@@ -92,9 +92,11 @@ class PreProcessText:
     def process(self, text):
 
         text = self.smallCase(text)
+        print(f"\n\n{text}\n\n")
+        words = Tokenizer.TokenizeToWords(text)
+        print(f"\n\n{words}\n\n")
         sentences = self.removePunctutaions(text)
         sentences = self.removeStopwords(sentences)
-        words = Tokenizer.TokenizeToWords(sentences)
 
         return words
 
@@ -102,6 +104,7 @@ class PreProcessText:
 if __name__ == "__main__":
     text = """Me to Mr. Shirt today: \n‘Tum hoti toh kaisa hota….\nTum iss baat pe Ph.D. leti,\nTum iss baat pe kitni hansti…….Tum hoti toh aisa hota..’
      Me also waiting for #Pathaan https://t.co/EnLPXw9csA"""
+    text = """Your dedication for the welfare of our country and its people is highly appreciated. May you have the strength and health to achieve all your goals. Take a day off and enjoy your Birthday, sir. Happy Birthday @narendramodi"""
     ppt = PreProcessText()
     x = ppt.process(text)
     print(x)

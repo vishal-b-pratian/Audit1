@@ -62,7 +62,6 @@ class Tokenizer:
         sentences = text.split("<stop>")
         sentences = sentences[:-1]
         sentences = [s.strip() for s in sentences if s != ""]
-        print("\ntokenize: ", sentences)
         return sentences
 
     @classmethod

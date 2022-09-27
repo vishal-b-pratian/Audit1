@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Apps created.
     "configuration.apps.ConfigurationConfig",
+    "content_management.apps.ContentManagementConfig",
+    "audit_engine.apps.AuditEngineConfig",
     # Thrid party apps.
     "rest_framework",
 ]
