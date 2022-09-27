@@ -1,5 +1,4 @@
 import json
-from emoji import UNICODE_EMOJI
 from .tokenizer import Tokenizer
 
 
@@ -13,6 +12,17 @@ def getProcessedData(data: str) -> list[str]:
         return data
 
     return data.split(" ")
+
+
+def convertDataForStorage(data: list[str]) -> str:
+    """
+    Converting list of processed words to a
+    string for storing it in database.
+    """
+    if isinstance(data, str):
+        return data
+
+    return " ".join(data)
 
 
 class PreProcessText:
@@ -49,7 +59,6 @@ class PreProcessText:
         return output
 
     def _removePunctuations(self, sentence: str):
-        sentence = sentence.lower()
         for punctuation in self.punctuations:
             sentence = sentence.replace(punctuation, "")
 
@@ -71,11 +80,28 @@ class PreProcessText:
     #     for sentence in sentences:
     #         ...
 
+    @staticmethod
+    def smallCase(text):
+
+        if isinstance(text, str):
+            text = [text]
+
+        text = list(map(str.lower, text))
+        return text
+
     def process(self, text):
 
-        text = text.lower()
+        text = self.smallCase(text)
         sentences = self.removePunctutaions(text)
         sentences = self.removeStopwords(sentences)
         words = Tokenizer.TokenizeToWords(sentences)
 
         return words
+
+
+if __name__ == "__main__":
+    text = """Me to Mr. Shirt today: \n‘Tum hoti toh kaisa hota….\nTum iss baat pe Ph.D. leti,\nTum iss baat pe kitni hansti…….Tum hoti toh aisa hota..’
+     Me also waiting for #Pathaan https://t.co/EnLPXw9csA"""
+    ppt = PreProcessText()
+    x = ppt.process(text)
+    print(x)

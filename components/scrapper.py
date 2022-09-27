@@ -1,7 +1,7 @@
 import snscrape
 import requests
 from bs4 import BeautifulSoup
-from patcher import scraping_request
+from .patcher import scraping_request
 from urllib.error import HTTPError, URLError
 import snscrape.modules.twitter as sntwitter
 
@@ -9,7 +9,11 @@ snscrape.base.Scraper._request = scraping_request
 
 
 class Scrapper:
-    def __getUsername(self, url: str) -> str:
+
+    TWEETS_LIMIT = 100
+
+    @staticmethod
+    def __getUsername(url: str) -> str:
         username = url.split("/")[-1]
         return username
 
@@ -54,17 +58,17 @@ class Scrapper:
     def scrapeTwitter(self, url: str):
         username = self.__getUsername(url)
         tweets = []
-        tweets_generator = sntwitter.TwitterTweetScraper(
+        tweets_generator = sntwitter.TwitterSearchScraper(
             f"from:{username}",
         ).get_items()
         for count, tweet in enumerate(tweets_generator):
-            if count < 100:
+            if count > Scrapper.TWEETS_LIMIT:
                 break
             tweets.append(tweet.content)
 
         return tweets
 
-    def scrapeURL(self, url):
+    def scrapeURL(self, url: str):
         url_type = self.__validateURL(url)
         if not url_type:
             raise Exception  # Write custom exception.
@@ -73,7 +77,7 @@ class Scrapper:
         else:
             data = self.__fetch_data(url)
 
-        return
+        return data
 
 
 if __name__ == "__main__":
