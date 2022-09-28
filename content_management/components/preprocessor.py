@@ -1,5 +1,5 @@
 import json
-from tokenizer import Tokenizer
+from .tokenizer import Tokenizer
 
 
 def getProcessedData(data: str) -> list[str]:

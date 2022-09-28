@@ -5,11 +5,15 @@ from content_management import models as content_models
 # Create your models here.
 
 
-class ScoreCard(models.Model):
+class ScoreCardParameter(models.Model):
+    """
+    Table is used to store scores for each
+    parameter.
+    """
+
     id = models.UUIDField(
         default=uuid.uuid4, verbose_name="Score Id", primary_key=True, editable=True
     )
-    content = models.ForeignKey(content_models.ChannelData, on_delete=models.CASCADE)
     dna_alignment = models.FloatField(verbose_name="DNA Alignment", default=0.0)
     posmo_tag = models.FloatField(verbose_name="Posmo Tag", default=0.0)
     differentiator = models.FloatField(verbose_name="Differentiator", default=0.0)
@@ -20,4 +24,4 @@ class ScoreCard(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.content} score card"
+        return f"{self.id}"

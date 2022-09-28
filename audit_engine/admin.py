@@ -3,4 +3,4 @@ from django.contrib import admin
 
 # Register your models here.
 
-admin.site.register(models.ScoreCard)
+admin.site.register(models.ScoreCardParameter)
