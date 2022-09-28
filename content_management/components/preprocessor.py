@@ -19,10 +19,10 @@ def convertDataForStorage(data: list[str]) -> str:
     Converting list of processed words to a
     string for storing it in database.
     """
-    if isinstance(data, str):
-        return data
+    if isinstance(data, list):
+        data = " ".join(data)
 
-    return " ".join(data)
+    return data
 
 
 class PreProcessText:
@@ -33,8 +33,12 @@ class PreProcessText:
 
     def __init__(self, language="en"):
         self.language = language
-        stopwords_file = open(r"components\json_files\stopwords.json")
-        punctuations_file = open(r"components\json_files\punctuations.json")
+        stopwords_file = open(
+            r"content_management\components\json_files\stopwords.json"
+        )
+        punctuations_file = open(
+            r"content_management\components\json_files\punctuations.json"
+        )
         self.stopwords = json.load(stopwords_file)[language]
         self.punctuations = json.load(punctuations_file)[language]
 

@@ -35,6 +35,7 @@ class Channel(models.Model):
         on_delete=models.DO_NOTHING,
         related_name="channel",
         blank=True,
+        null=True,
     )
     compliance_score = models.FloatField(verbose_name="Compliance Score", default=0)
     previous_compliance_score = models.FloatField(
@@ -67,6 +68,7 @@ class ChannelData(models.Model):
         on_delete=models.DO_NOTHING,
         related_name="channel_data",
         blank=True,
+        null=True,
     )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

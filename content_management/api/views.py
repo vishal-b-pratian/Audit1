@@ -2,8 +2,8 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from . import serializers as content_serializers
-from configuration import models as config_models
 from rest_framework.generics import CreateAPIView
+from content_management import models as content_models
 
 
 class CreateChannel(CreateAPIView):
@@ -12,10 +12,13 @@ class CreateChannel(CreateAPIView):
 
     def __createChannelData(self, channel, scraped_data: str):
 
-        from components.preprocessor import PreProcessText, convertDataForStorage
+        from content_management.components.preprocessor import (
+            PreProcessText,
+            convertDataForStorage,
+        )
 
         processor = PreProcessText()
-        instance = config_models.ChannelData.objects.create(channel=channel)
+        instance = content_models.ChannelData.objects.create(channel=channel)
         processed_data = processor.process(scraped_data)
         print("\n\nScarped Data: ", scraped_data, "\n\n")
         print("\n\nProcessed Data: ", processed_data, "\n\n")
@@ -27,10 +30,10 @@ class CreateChannel(CreateAPIView):
 
     def createChannelData(self, channel_id):
 
-        from components.scrapper import Scrapper
+        from content_management.components.scrapper import Scrapper
 
         url_scrapper = Scrapper()
-        channel = config_models.Channel.objects.get(id=channel_id)
+        channel = content_models.Channel.objects.get(id=channel_id)
         scraped_data = url_scrapper.scrapeURL(channel.url)
         for data in scraped_data:
             self.__createChannelData(channel, data)
@@ -51,7 +54,7 @@ class CreateChannelData(CreateAPIView):
     serializer_class = content_serializers.ChannelDataSerializer
 
     def create(self, request, channel_id):
-        channel = config_models.Channel.objects.get(id=channel_id)
+        channel = content_models.Channel.objects.get(id=channel_id)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(channel=channel)
