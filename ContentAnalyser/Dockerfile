@@ -2,7 +2,7 @@
 FROM python:2.7
 
 # File Author / Maintainer
-MAINTAINER Esther
+MAINTAINER Basavaraj
 
 #add project files to the usr/src/app folder
 ADD . /usr/src/app
