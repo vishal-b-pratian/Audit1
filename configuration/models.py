@@ -4,6 +4,28 @@ from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
+class Engagement(models.Model):
+    id = models.UUIDField(
+        default=uuid.uuid4, verbose_name="Company Id", primary_key=True, editable=True
+    )
+    engagement_type = models.ForeignKey("EngagementType", on_delete=models.DO_NOTHING)
+    company = models.ForeignKey("CompanyDetails", on_delete=models.CASCADE)
+    start_Date = models.DateTimeField()
+    end_Date = models.DateTimeField()
+
+    def __str__(self):
+        return f"{self.company.name} - {self.engagement_type}"
+
+
+class EngagementType(models.Model):
+    engagement_name = models.CharField(
+        verbose_name="Engagement Name", max_length=50, null=True
+    )
+
+    def __str__(self):
+        return self.engagement_name
+
+
 class CompanyDetails(models.Model):
     """
     Table to store company details.
@@ -61,17 +83,12 @@ class ParameterType(models.Model):
     parameter_name = models.CharField(
         verbose_name="Parameter Name", max_length=20, null=True
     )
+    engagement_type = models.ForeignKey(
+        "EngagementType", on_delete=models.CASCADE, null=True
+    )
 
     def __str__(self):
         return self.parameter_name
-
-
-# class FieldChoices(models.TextChoices):
-#     DNA = "dna", _("DNA")
-#     POSMO_TAG = "posmotag", _("POSMO TAG")
-#     DIFFERENTIATOR = "differentiator", _("Differentiator")
-#     VALUE_PROPOSITION = "value proposition", _("Value Proposition")
-#     TAGLINE = "tagline", _("Tagline")
 
 
 class Measure(models.Model):
@@ -137,3 +154,78 @@ class ChannelTypeWeightage(models.Model):
 
     def __str__(self):
         return f"{self.company} -> {self.channel_type}"
+
+
+class Channel(models.Model):
+    """
+    Tabel to store the category of
+    channel source.
+    """
+
+    type_name = models.ForeignKey("ChannelType", on_delete=models.CASCADE)
+    channel_name = models.CharField(
+        verbose_name="Channel Name", max_length=100, null=True
+    )
+
+    def __str__(self):
+        return self.channel_name
+
+
+class ChannelSource(models.Model):
+    """
+    Table is used to store channel information
+    of a company.
+    Each URL is considered as a channel in this
+    architecture.
+    """
+
+    id = models.UUIDField(
+        default=uuid.uuid4, verbose_name="Channel Id", primary_key=True, editable=True
+    )
+    type_name = models.ForeignKey("ChannelType", on_delete=models.CASCADE)
+    channel = models.ForeignKey("Channel", on_delete=models.PROTECT, null=True)
+    company = models.ForeignKey("CompanyDetails", on_delete=models.CASCADE, null=True)
+    url = models.URLField(
+        verbose_name="Channel Url", unique=True, null=True, max_length=200
+    )
+    weightage = models.FloatField(verbose_name="Weightage", null=True, default=1.0)
+    compliance_score = models.FloatField(verbose_name="Compliance Score", default=0)
+    previous_compliance_score = models.FloatField(
+        verbose_name="Previous Compliance Score", default=0
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.company} -> {self.url}"
+
+
+class ChannelTypeParameterWeights(models.Model):
+    type_name = models.ForeignKey(to="ChannelType", on_delete=models.CASCADE)
+    parameters = models.CharField(verbose_name="Parameters", max_length=2000, null=True)
+
+    def __str__(self):
+        return self.parameters
+
+
+class ChannelParameterWeights(models.Model):
+    channel = models.ForeignKey(
+        to="Channel", on_delete=models.CASCADE, related_name="channel"
+    )
+    parameters = models.CharField(verbose_name="Parameters", max_length=2000, null=True)
+
+    def __str__(self):
+        return self.parameters
+
+
+class ChannelSourceParameterWeights(models.Model):
+    url = models.ForeignKey(
+        to="Channel",
+        verbose_name="Channel Url",
+        max_length=200,
+        on_delete=models.DO_NOTHING,
+    )
+    parameters = models.CharField(verbose_name="Parameters", max_length=2000, null=True)
+
+    def __str__(self):
+        return self.parameters
