@@ -1,25 +1,22 @@
-//FROM python:3
-//ENV PYTHONDONTWRITEBYTECODE=1
-//ENV PYTHONUNBUFFERED=1
-//WORKDIR /code
-//COPY requirements.txt /code/
-//RUN pip install -r requirements.txt
-//COPY . /code/
+# set the base image 
+FROM python:2.7
 
-# pull official base image
-FROM python:3.9.6-alpine
+# File Author / Maintainer
+MAINTAINER Esther
 
-# set work directory
+#add project files to the usr/src/app folder
+ADD . /usr/src/app
+
+#set directoty where CMD will execute 
 WORKDIR /usr/src/app
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+COPY requirements.txt ./
 
-# install dependencies
-RUN pip install --upgrade pip
-COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+# Get pip to download and install requirements:
+RUN pip install --no-cache-dir -r requirements.txt
 
-# copy project
-COPY . .
+# Expose ports
+EXPOSE 8000
+
+# default command to execute    
+CMD exec gunicorn djangoapp.wsgi:application --bind 0.0.0.0:8000 --workers 3 
