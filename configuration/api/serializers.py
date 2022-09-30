@@ -4,6 +4,7 @@ from configuration import models as config_models
 from django.contrib.auth import models as auth_models
 
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = auth_models.User
@@ -29,6 +30,17 @@ class CompanyDetailsSerializer(serializers.ModelSerializer):
         fields = ["id", "user", "name", "created", "updated", "is_active"]
         read_only_fields = ["id", "user", "created", "updated"]
 
+class EngagementSerializer(serializers.Serializer):
+    company = serializers.CharField()
+    type = serializers.CharField()
+    end_Date = serializers.DateTimeField()
+    
+    
+    def create(self, validated_data):
+        company_details = config_models.CompanyDetails.objects.get(name = validated_data.get('company'))
+        validated_data['company'] = company_details
+        return config_models.Engagement.objects.create(**validated_data)
+
 
 class ChannelDetailsSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -49,7 +61,9 @@ class UrlDetailsChannelSerializer(serializers.ModelSerializer):
     class Meta:
         model = config_models.Channel
         fields = ["id","channel_name","url"]
-class ChannelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = config_models.Channel
-        fields = ["id","channel_name","url"]
+class ChannelSerializer(serializers.Serializer):
+    channel_name = serializers.CharField()
+    type_name = serializers.CharField()
+    url = serializers.URLField()
+   
+   

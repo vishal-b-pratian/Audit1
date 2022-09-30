@@ -1,6 +1,10 @@
 from configuration.models import Engagement
+from django.core import serializers
+from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+import dateutil.parser as dateTimeparser
+from itertools import chain
 from . import serializers as config_serializers
 from configuration import models as config_models
 from django.contrib.auth import models as auth_models
@@ -41,8 +45,7 @@ def getCompanyDetailsData(request):
 
 
 @api_view(["GET"])
-def getEngagementDetails(request):
-    company_name = request.GET['company_name']
+def getEngagementDetails(request,company_name):
 
     company_details = config_models.CompanyDetails.objects.get(name = company_name)
     engagement_details = config_models.Engagement.objects.filter(company = company_details)
@@ -82,9 +85,38 @@ def getUrlDetailsChannel(request,company_name, engagement_type, channel_name):
 def getChannelsData(request,company_name):
     company_details = config_models.CompanyDetails.objects.get(name = company_name)
     engagement_details = config_models.Engagement.objects.filter(company = company_details)
+    channels = []
+    for engagement in engagement_details:
+        if engagement.is_active:
+            channels.append(config_models.Channel.objects.filter(engagement = engagement)) 
+    serializer_data = []
+    for channel in channels:
+       
+        serializer_data.append(config_serializers.ChannelSerializer(channel, many=True).data) 
+                 
+    return Response(serializer_data)
 
-    channels = config_models.Channel.objects.all()
-    serializer = config_serializers.ChannelSerializer(channels, many=True)
-    return Response(serializer.data)
+@api_view(["POST"])
+def addEngagement(request):
+    # Engagement = request.data.get('engagement')
+    serializer = config_serializers.EngagementSerializer(data = request.data.get('engagement'))
+    serializer.is_valid(raise_exception = True)
+    serializer.save()
+    return Response(serializer.validated_data)
 
-
+    # print(Engagement)
+    # end_date = dateTimeparser.parse(Engagement.get('end_Date'))
+    # type = Engagement['type']
+    # company_details = config_models.CompanyDetails.objects.get(name = Engagement.get('company'))
+    # # print(Engagement)
+    # engagement = config_models.Engagement.objects.create(company = company_details,type = type, end_Date = end_date)
+    # x = {}
+    # x['company'] = engagement.company.id
+    # x['start_Date'] = engagement.start_Date
+    # return Response(x)
+    
+def addChannel(request):
+    serializer = config_serializers.ChannelSerializer(data = request.data.get('channel'))
+    serializer .is_valid(raise_exception = True)
+    serializer.save()
+    return Response(serializer.validated_data)
