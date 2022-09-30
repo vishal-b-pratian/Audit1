@@ -1,3 +1,4 @@
+from enum import unique
 from random import choices
 from symbol import parameters
 from tabnanny import verbose
@@ -32,6 +33,8 @@ class CompanyDetails(models.Model):
 
 
 class Engagement(models.Model):
+    class Meta:
+        unique_together = [['type','company']]
     id = models.UUIDField(
         default=uuid.uuid4, verbose_name="Company Id", primary_key=True, editable=True
     )
@@ -92,6 +95,8 @@ class AuditParameter(models.Model):
 
 
 class ChannelType(models.Model):
+    class meta:
+        unique_together = [['channel_type','engagement']]
     id = models.UUIDField(
         default=uuid.uuid4, 
         verbose_name="Channel Type Id", 
@@ -175,6 +180,8 @@ class ChannelName(models.Model):
         return f" {self.channel_name}"
 
 class ChannelTypeParameter(models.Model):
+    class Meta:
+        unique_together = [['type_name','parameters']]
     type_name = models.ForeignKey(
         to = "ChannelType", 
         on_delete=models.CASCADE
@@ -188,6 +195,8 @@ class ChannelTypeParameter(models.Model):
 
 
 class ChannelParameter(models.Model):
+    class Meta:
+        unique_together = [['channel','parameters']]
     channel= models.ForeignKey(
         to = "Channel", on_delete=models.CASCADE, related_name="channel"
     )
@@ -199,6 +208,8 @@ class ChannelParameter(models.Model):
 
 
 class ChannelSourceParameter(models.Model):
+    class Meta:
+        unique_together = [['url','parameters']]
     url =  models.ForeignKey(
         to = "Channel", 
         verbose_name="Channel Url",  
