@@ -48,7 +48,7 @@ class ChannelDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = config_models.Channel
-        fields = ["id", "channel_name", "type_name"]
+        fields = ["url", "channel_name", "type_name","engagement"]
 class EngagementDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = config_models.Engagement

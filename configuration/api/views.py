@@ -115,8 +115,12 @@ def addEngagement(request):
     # x['start_Date'] = engagement.start_Date
     # return Response(x)
     
-def addChannel(request):
-    serializer = config_serializers.ChannelSerializer(data = request.data.get('channel'))
-    serializer .is_valid(raise_exception = True)
-    serializer.save()
-    return Response(serializer.validated_data)
+# def addChannel(request):
+#     if request.method == "GET":
+
+#     else:
+#         serializer = config_serializers.ChannelSerializer(data = request.data.get('channel'))
+#         serializer .is_valid(raise_exception = True)
+#         serializer.save()
+#         return Response(serializer.validated_data)
+

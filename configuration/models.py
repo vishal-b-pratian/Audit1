@@ -105,7 +105,6 @@ class ChannelType(models.Model):
     )
     channel_type = models.CharField(
         max_length=50, 
-        unique=True, 
         verbose_name="Channel Type",
         choices = (
             ("social_media", "Social Media"),
