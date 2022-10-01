@@ -7,4 +7,4 @@ from . import models as audit_model
 admin.site.register(audit_model.ChannelParameterScore)
 admin.site.register(audit_model.ChannelTypeParameterScore)
 admin.site.register(audit_model.SourceParameterScore)
-admin.site.register(audit_model.AuditInformation)
+# admin.site.register(audit_model.AuditInformation) 

@@ -98,6 +98,20 @@ WSGI_APPLICATION = "posmos.wsgi.application"
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'sql_server.pyodbc',
+#         'NAME': 'mydb',
+#         'USER': 'posmos@myserver',
+#         'PASSWORD': 'Pos@1234',
+#         'HOST': 'posmos.database.windows.net',
+#         'PORT': '',
+#         'OPTIONS': {
+#             'driver': 'ODBC Driver 13 for SQL Server',
+#         },
+#     },
+# }
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

@@ -4,40 +4,60 @@ from django.contrib.auth.models import User
 from content_management import models as content_models
 from configuration import models as config_models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from jsonfield import JSONField
 
-# Create your models here.
+# class AuditInformation(models.Model):
+#     channel_name = models.ForeignKey(
+#         config_models.ChannelName,
+#         on_delete=models.CASCADE,
+#         related_name="audit_info",
+#     )
+#     start_date = models.DateField(verbose_name="Start Date")
+#     end_date = models.DateField(verbose_name="End Date")
+#     overall_compliance_score = models.FloatField(
+#         verbose_name="Overall Compliance Score",
+#         default=0.0,
+#         validators=[MinValueValidator(0), MaxValueValidator(100)],
+#     )
+#     date_created = models.DateTimeField(auto_now_add=True)
+#     date_updated = models.DateTimeField(auto_now=True)
 
-class AuditInformation(models.Model):
-    channel_name = models.ForeignKey(
-        config_models.ChannelName,
-        on_delete=models.CASCADE,
-        related_name="audit_info",
-    )
-    start_date = models.DateField(verbose_name="Start Date")
-    end_date = models.DateField(verbose_name="End Date")
-    overall_compliance_score = models.FloatField(
-        verbose_name="Overall Compliance Score",
-        default=0.0,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
-    )
-    date_created = models.DateTimeField(auto_now_add=True)
-    date_updated = models.DateTimeField(auto_now=True)
+#     def __str__(self):
+#         return f"Audit info <{self.channel_name}>"
 
-    def __str__(self):
-        return f"Audit info <{self.channel_name}>"
+
+# class ClientTypes(models.Model):
+#     id = models.UUIDField(default = uuid.uuid4, verbose_name = "Id", primary_key = True)
+#     type_name = models.CharField(max_length = 50, unique = True, verbose_name = "Client Type")
+
+
+# class AuditType(models.Model):
+#     # !!!!! Important add prevention for multiple same audits.
+#     id = models.UUIDField(default = uuid.uuid4, verbose_name = "Id", primary_key = True)
+#     parameters = models.ForeignKey(to = config_models.AuditParameter, on_delete = models.CASCADE)
+#     start_date = models.DateField()
+#     end_date = models.DateField()
+
+# class Audit(models.Model):
+#     Engagements = models.ForeignKey()
+#     audit_name = models.CharField(max_length = 500, nullable = False)
+#     ClientTypes = models.ForeignKey(to = ClientTypes, on_delete = models.PROTECT)
 
 
 class SourceParameterScore(models.Model):
-    scource = models.ForeignKey(
+    source = models.ForeignKey(
         config_models.ChannelSourceParameter, on_delete=models.CASCADE, related_name="parameter"
     )
+
     id = models.UUIDField(
         default=uuid.uuid4,
         verbose_name="Source Parameter Id",
         primary_key=True,
         editable=True,
     )
-    parametersScores = models.CharField(verbose_name="Source Parameters", max_length=2000)
+    keyword_count = models.IntegerField(verbose_name = 'Mapped Keyword Count', default = 0)
+    keyword_frequencies  = JSONField(default = '[]')
+    parameter_score = models.FloatField(verbose_name="Parameter Score", default=0.0)
 
 
 class ChannelParameterScore(models.Model):
@@ -50,7 +70,7 @@ class ChannelParameterScore(models.Model):
         primary_key=True,
         editable=True,
     )
-    parameters = models.CharField(verbose_name="Channel Parameters", max_length=2000)
+    parameter_score = models.FloatField(verbose_name="Parameter scores", default=0.0)
 
 
 class ChannelTypeParameterScore(models.Model):
@@ -63,8 +83,8 @@ class ChannelTypeParameterScore(models.Model):
         primary_key=True,
         editable=True,
     )
-    parameters = models.CharField(
-        verbose_name="ChannelType Parameters", max_length=2000
+    parameter_score = models.FloatField(
+        verbose_name="Parameter Score", default=0.0
     )
 
 # class ScoreCardParameter(models.Model):

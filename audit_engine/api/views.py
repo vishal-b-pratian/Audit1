@@ -1,13 +1,13 @@
 import datetime
-from statistics import mode
-from time import time
+from rest_framework import status, exceptions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from audit_engine import models as audit_models
 from audit_engine.api import serializers
 from configuration import models as config_model
-
+from django.core import serializers as dj_serializers
+from . import api_helpers
 
 
 @api_view(["GET"])
@@ -26,10 +26,10 @@ def getStatus(request):
         "Completed": 0,
     }
 
-    audits = audit_models.AuditInformation.objects.all()
+    audits = config_model.Engagement.objects.all()
 
     for audit in audits:
-        if audit.end_date > datetime.now().date():
+        if audit.end_Date > datetime.datetime.now(datetime.timezone.utc):
             status["In progress"] += 1
         else:
             status["Completed"] += 1
@@ -54,5 +54,6 @@ def getOverallScore(request):
 
 class getEngagements(ListAPIView):
     queryset = config_model.Engagement.objects.all()
-    serializer_class = serializers.EngagementsSerializer
+    serializer_class = serializers.AllEngagementsSerializer
+
 
