@@ -2,6 +2,7 @@ from enum import unique
 from random import choices
 from symbol import parameters
 from tabnanny import verbose
+from unittest.util import _MAX_LENGTH
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
@@ -142,6 +143,11 @@ class Channel(models.Model):
         verbose_name="Channel Id", 
         primary_key=True, 
         editable=True
+    )
+    channel_title = models.CharField(
+        verbose_name = "channel_Title",
+        max_length = 200 
+
     )
     channel_name = models.ForeignKey(
         to = "ChannelName", 
