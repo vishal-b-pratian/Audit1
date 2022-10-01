@@ -35,10 +35,18 @@ def triggerScoreGeneration(request):
     mapped_keywords = mapped_keywords.mapped_keywords
     
     # multiple parameters are available for a single channel. Merge SQL and JSON paramters.
-    # Config and Content services Models are not compatable with each other.
+    # config and content services Models are not compatable with each other.
 
     channelSourceParameter = config_models.ChannelSourceParameter.objects.query(channel=channel)
     for sourceParameter in channelSourceParameter:
+        parameter_name =  sourceParameter.parameters.parameter
+        # if parameter_name not in 
         
-        audit_models.SourceParameterScore.objects.create()
+        
+        # audit_models.SourceParameterScore.objects.create(
+        #     source = sourceParameter,
+        #     keyword_count = ,
+        #     keyword_frequencies = ,
+        #     parameter_score = ,
+        # )
 
