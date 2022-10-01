@@ -51,6 +51,10 @@ class Engagement(models.Model):
         ("both", "both")
         )
     )
+    compliance_score = models.FloatField(verbose_name="Compliance Score", default=0)
+    previous_compliance_score = models.FloatField(
+        verbose_name="Compliance Score", default=0
+    )
 
     def __str__(self):
         return f"{self.company.name} - {self.type}"
@@ -146,6 +150,7 @@ class Channel(models.Model):
     )
     channel_title = models.CharField(
         verbose_name = "channel_Title",
+        null = True,
         max_length = 200 
 
     )
@@ -214,8 +219,8 @@ class ChannelParameter(models.Model):
 
 class ChannelSourceParameter(models.Model):
     class Meta:
-        unique_together = [['url','parameters']]
-    url =  models.ForeignKey(
+        unique_together = [['channel','parameters']]
+    channel =  models.ForeignKey(
         to = "Channel", 
         verbose_name="Channel Url",  
         max_length=200,

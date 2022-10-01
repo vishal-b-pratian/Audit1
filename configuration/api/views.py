@@ -1,3 +1,4 @@
+from random import sample
 from configuration.models import Engagement
 from django.core import serializers
 from django.http import JsonResponse
@@ -37,7 +38,8 @@ def getUsersData(request):
 
 @api_view(["GET"])
 def getCompanyDetailsData(request):
-
+    sample_data = request.data.get('sample')
+    print(sample_data)
     company_details = config_models.CompanyDetails.objects.all()
     serializer = config_serializers.CompanyDetailsSerializer(company_details, many=True)
 
@@ -47,10 +49,9 @@ def getCompanyDetailsData(request):
 @api_view(["GET"])
 def getEngagementDetails(request,company_name):
 
-    company_details = config_models.CompanyDetails.objects.get(name = company_name)
-    engagement_details = config_models.Engagement.objects.filter(company = company_details)
-    serializer = config_serializers.EngagementDetailsSerializer(engagement_details, many=True)
-    print(serializer.data)
+    engagement_details = config_models.ChannelType.objects.all()
+    serializer = config_serializers.ChannelTypeSerializer(engagement_details, many=True)
+    print(serializer)
     return Response(serializer.data)
 
 

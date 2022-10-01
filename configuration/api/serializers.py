@@ -1,3 +1,4 @@
+from pyexpat import model
 from attr import fields
 from rest_framework import serializers
 from configuration import models as config_models
@@ -42,17 +43,36 @@ class EngagementSerializer(serializers.Serializer):
         return config_models.Engagement.objects.create(**validated_data)
 
 
-class ChannelDetailsSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-    company = CompanyDetailsSerializer()
+# class ChannelDetailsSerializer(serializers.ModelSerializer):
+#     user = UserSerializer()
+#     company = CompanyDetailsSerializer()
 
+#     class Meta:
+#         model = config_models.Channel
+#         fields = ["url", "channel_name", "type_name","engagement"]
+class ChannelSourceParameterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = config_models.ChannelSourceParameter
+        fields = ["parameters","weight"]
+class ChannelSerializer(serializers.Serializer):
+    parameter_weightage = ChannelSourceParameterSerializer(many=True)
     class Meta:
         model = config_models.Channel
-        fields = ["url", "channel_name", "type_name","engagement"]
+        fields = ["channel_name","channel_title","url","is_active","parameter_weightage"]
+
+
+
 class EngagementDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = config_models.Engagement
-        fields = ["company","type","end_Date"]
+        fields = ('id','company','type','end_Date')
+
+class ChannelTypeSerializer(serializers.ModelSerializer):
+    engagement = EngagementDetailsSerializer(many = True)
+    
+    class Meta:
+        model = config_models.ChannelType
+        fields = ('id','channel_type','channel_type_weightage','engagement')
 class UrlDetailsChannelTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = config_models.Channel
@@ -60,7 +80,7 @@ class UrlDetailsChannelTypeSerializer(serializers.ModelSerializer):
 class UrlDetailsChannelSerializer(serializers.ModelSerializer):
     class Meta:
         model = config_models.Channel
-        fields = ["id","channel_name","url"]
+        fields = ("id","channel_name","url")
 class ChannelSerializer(serializers.Serializer):
     channel_name = serializers.CharField()
     type_name = serializers.CharField()
