@@ -40,7 +40,7 @@ def getStatus(request):
 @api_view(["GET"])
 def getOverallScore(request):
 
-    audits = audit_models.AuditInformation.objects.all()
+    audits = config_model.Engagement.objects.all()
     score_avg = 0.0
     for audit in audits:
         score_avg += audit.overall_compliance_score
@@ -50,7 +50,6 @@ def getOverallScore(request):
     api_response = {"compliance score": score_avg}
 
     return Response((api_response))
-
 
 class getEngagements(ListAPIView):
     queryset = config_model.Engagement.objects.all()

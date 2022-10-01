@@ -23,7 +23,6 @@ def getEngagementById(request):
 
     return True, engagement
 
-
 def instanseNotFoundResponse(class_name, parameter='parameter'):
     return Response(f"Couldn't find isntance for {class_name}. Please ensure correct {parameter} is passed in quety",
                     status=status.HTTP_400_BAD_REQUEST)

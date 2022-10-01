@@ -40,6 +40,8 @@ def triggerScoreGeneration(request):
     channelSourceParameter = config_models.ChannelSourceParameter.objects.query(channel=channel)
     for sourceParameter in channelSourceParameter:
         parameter_name =  sourceParameter.parameters.parameter
+        assert parameter_name in mapped_keywords
+        mapped_keywords[parameter_name]['count']
         # if parameter_name not in 
         
         
