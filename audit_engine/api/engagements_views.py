@@ -1,5 +1,6 @@
 
 import datetime
+from django.db.models import Q
 from django.core import serializers as dj_serializers
 from rest_framework import exceptions, status
 from rest_framework.response import Response
@@ -23,15 +24,19 @@ class ChannelNameSerialzer(serializers.ModelSerializer):
         model = config_models.ChannelName
         filelds = ['channel_name']
 
+
 class AllChannelsSerializer(serializers.ModelSerializer):
     channelName = serializers.SerializerMethodField()
+
     class Meta:
         model = config_models.Channel
         fields = ['id', 'channelName']
+
     def get_channelName(self, channel):
         return channel.channel_name.channel_name
 
-class AllEngagemnetSerializer(serializers.ModelSerializer):
+
+class AuditSerializer(serializers.ModelSerializer):
     companyId = serializers.SerializerMethodField()
     companyName = serializers.SerializerMethodField()
     auditName = serializers.SerializerMethodField()
@@ -43,7 +48,8 @@ class AllEngagemnetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = config_models.Engagement
-        fields = ["companyId", "companyName", "auditName", "auditId", "auditStatus", "auditScore", "channels", "channelCount"]
+        fields = ["companyId", "companyName", "auditName", "auditId",
+                  "auditStatus", "auditScore", "channels", "channelCount"]
 
     def get_companyId(self, engagement):
         return engagement.company.id
@@ -63,7 +69,7 @@ class AllEngagemnetSerializer(serializers.ModelSerializer):
         return status
 
     def get_channels(self, engagement):
-        channels = config_models.Channel.objects.filter(engagement = engagement)
+        channels = config_models.Channel.objects.filter(engagement=engagement)
         serializer = AllChannelsSerializer(channels, many=True)
         return serializer.data
 
@@ -76,16 +82,35 @@ class AllEngagemnetSerializer(serializers.ModelSerializer):
 
 @api_view(['GET'])
 def getAllAudits(request):
-    company_id  = request.GET.get('CompanyId')
+    company_id = request.GET.get('CompanyId')
     if not company_id:
         return Response('Company Id not in request.', status=status.HTTP_400_BAD_REQUEST)
 
-    company = config_models.CompanyDetails.objects.get(id = company_id)
+    company = config_models.CompanyDetails.objects.get(id=company_id)
     if not company:
         return Response('No Company instance found for the following company Id.', status=status.HTTP_400_BAD_REQUEST)
 
     allEngagemnets = config_models.Engagement.objects.filter(company=company)
-    serializer = AllEngagemnetSerializer(allEngagemnets, many=True)
+    serializer = AuditSerializer(allEngagemnets, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+def viewAuditSummary(request):
+    company_id = request.GET.get('CompanyId', None)
+    audit_id = request.GET.get('AuditId', None)
+
+    if not company_id:
+        return Response('Company Id not in request.', status=status.HTTP_400_BAD_REQUEST)
+
+    if not audit_id:
+        return Response('Audit Id not in request.', status=status.HTTP_400_BAD_REQUEST)
+
+    audit = config_models.Engagement.objects.filter(Q(company__id=company_id) & Q(id=audit_id))
+    if len(audit) >1:
+        raise Exception('Multiple results for audit')
+    audit = audit.first()
+    serializer = AuditSerializer(audit)
     return Response(serializer.data)
 
 
@@ -104,15 +129,6 @@ class createEngagement(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(company=company)
         return Response(serializer.data)
-
-
-@api_view(["GET"])
-def getEngagementDetails(request):
-    fetched, result = api_helpers.getEngagementById(request)
-    if not fetched:
-        return result
-    serializer = EngagementSerializer(result)
-    return Response(serializer.data)
 
 
 @api_view(["POST"])
