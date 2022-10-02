@@ -29,7 +29,9 @@ def getStatus(request):
     audits = config_model.Engagement.objects.all()
 
     for audit in audits:
-        if audit.end_Date > datetime.datetime.now(datetime.timezone.utc):
+        # Wait for the day to end to show Completed status.
+        formatted_end_date = datetime.datetime.combine(audit.end_Date, datetime.time(23,59,59,999999, datetime.timezone.utc))
+        if formatted_end_date > datetime.datetime.now(datetime.timezone.utc):
             status["In progress"] += 1
         else:
             status["Completed"] += 1

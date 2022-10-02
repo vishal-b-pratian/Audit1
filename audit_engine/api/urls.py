@@ -5,7 +5,8 @@ from django.urls import path
 urlpatterns = [
     path("", views.getRoutes, name="get-routes"),
     path('getAllAudits', engagements_views.getAllAudits),
-    path('getAuditSummary', engagements_views.viewAuditSummary)
+    path('viewAuditSummary', engagements_views.viewAuditSummary),
+    path('AddAudit', engagements_views.addAudit)
     # path("status/", views.getStatus, name="get-status"),
     # path("compliance-score/", views.getOverallScore, name="get-compliance-score"),
     # path("ViewAuditSummary/", views.getEngagements.as_view()),

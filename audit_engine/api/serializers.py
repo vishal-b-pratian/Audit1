@@ -22,7 +22,7 @@ class AllEngagementsSerializer(serializers.ModelSerializer):
         fields = ["id", "company", "daysRemaining", "channelTypeCount", "channelCount", "sourceCount"]
 
     def get_daysRemaining(self, obj):
-        time_diff = obj.end_Date - datetime.datetime.now(datetime.timezone.utc)
+        time_diff = obj.end_Date - datetime.datetime.now(datetime.timezone.utc).date()
         if time_diff.total_seconds() < 0:
             return "Ended"
         return f"{time_diff.days} Days to go"

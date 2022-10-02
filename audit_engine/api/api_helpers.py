@@ -1,11 +1,25 @@
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.response import Response
 from configuration import models as config_models
 
 
+class SerializeColumn:
+    def __init__(self, name, fieldType=serializers.CharField, db_column_name=None):
+        self.key = name
+        self.value = fieldType()
+        self.db_column_name = db_column_name
+        self.__validate()
+
+    def __validate(self):
+        assert isinstance(self.key, str) and self.key
+        assert isinstance(self.value, serializers.Field)
+        if self.db_column_name:
+            assert isinstance(self.db_column_name, str) and self.db_column_name
+
+
 def getUserCompany(request, validate=True):
     '''Helps to simulate request even if user is not logged in. As Frontend is angular and auth
-    will take place with azure AD, validate=False will return some company if available.'''
+    will take place with azure AD, validate=False will return some company instanse, if available.'''
     if validate:
         return request.user.company
     return config_models.CompanyDetails.objects.all().first()
@@ -23,6 +37,32 @@ def getEngagementById(request):
 
     return True, engagement
 
+
 def instanseNotFoundResponse(class_name, parameter='parameter'):
-    return Response(f"Couldn't find isntance for {class_name}. Please ensure correct {parameter} is passed in quety",
+    return Response(f"Couldn't find a record for the {class_name}. Please ensure correct {parameter} is passed in payload.",
                     status=status.HTTP_400_BAD_REQUEST)
+
+
+def getValidatedParams(params, request):
+    # create serializer class to validate data.
+    class InputSerializer(serializers.Serializer):
+        has_mapped_columns = False
+        for column in params:
+            if not isinstance(column, SerializeColumn):
+                raise Exception('params should be a list of SerialColumn objects.')
+
+            if column.db_column_name:
+                has_mapped_columns = True
+            locals()[column.key] = column.value
+    data = request.GET if request.method == 'GET' else request.data
+    input_serializer = InputSerializer(data=data)
+    input_serializer.is_valid(raise_exception=True)
+
+    if InputSerializer.has_mapped_columns:
+        for column in params:
+            if column.db_column_name:
+                value =  input_serializer.validated_data[column.key]
+                input_serializer.validated_data[column.db_column_name] = value
+                del input_serializer.validated_data[column.key]
+
+    return input_serializer.validated_data

@@ -1,5 +1,3 @@
-
-import datetime
 from django.core import serializers as dj_serializers
 from rest_framework import exceptions
 from rest_framework.response import Response
