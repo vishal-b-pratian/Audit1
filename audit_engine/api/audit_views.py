@@ -9,6 +9,11 @@ from rest_framework import serializers
 from configuration import models as config_models
 from audit_engine import models as audit_models
 
+# class AuditGridSerializer(serializers.Serializer):
+#     ChannelType = serializers.SerializerMethodField()
+    
+
+#     def get_ChannelType(self, audit):
 
 @api_view(['GET'])
 def getAuditDetails(request):

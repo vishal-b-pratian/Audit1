@@ -1,5 +1,4 @@
 import enum
-import datetime
 
 from django.db.models import Q
 from django.core import serializers as dj_serializers
@@ -9,8 +8,9 @@ from rest_framework.decorators import api_view
 from rest_framework.generics import CreateAPIView
 
 from configuration import models as config_models
-from audit_engine.api.api_helpers import SerializeColumn, getUserCompany, getValidatedParams, getEngagementById
-from audit_engine.api.validations import auditCreationValidation
+from audit_engine.api.api_helpers import (SerializeColumn, getUserCompany, getValidatedParams, getEngagementById,
+                                          instanceNotFoundResponse, parse_validated_data)
+from audit_engine.api import validations
 
 
 class EngagementSerializer(serializers.ModelSerializer):
@@ -38,7 +38,7 @@ class AllChannelsSerializer(serializers.ModelSerializer):
 
 
 class AuditSerializer:
-    '''Used to generate a class to parse audit response.'''
+    '''Generates a custom serializer to parse audit response.'''
 
     class Fields(enum.Enum):
         '''Class provides autocompletion in code editors.'''
@@ -122,7 +122,6 @@ class AuditSerializer:
 
             def get_EndTime(self, engagemet):
                 return engagemet.end_Date
-
         return BaseSerializer
 
 
@@ -130,13 +129,14 @@ class AuditSerializer:
 def getAllAudits(request):
     input_fields = [SerializeColumn(name='CompanyId')]
     validated_data = getValidatedParams(input_fields, request)
-    company_id = [validated_data[key] for key in input_fields.keys()]
+    company_id = parse_validated_data(input_fields, validated_data)
     allEngagemnets = config_models.Engagement.objects.filter(Q(company__id=company_id))
     Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.AuditType,
                                                                     AuditSerializer.Fields.ClientType,
                                                                     AuditSerializer.Fields.ClientTypeId,
                                                                     AuditSerializer.Fields.StartTime,
-                                                                    AuditSerializer.Fields.EndTime])
+                                                                    AuditSerializer.Fields.EndTime,
+                                                                    ])
     json_response = Serializer(allEngagemnets, many=True).data
     return Response(json_response)
 
@@ -144,28 +144,27 @@ def getAllAudits(request):
 @api_view(["GET"])
 def viewAuditSummary(request):
     input_fields = [SerializeColumn(name='CompanyId'),
-                    SerializeColumn(name="AuditId")]
+                    SerializeColumn(name="AuditId"),
+                    ]
 
     validated_data = getValidatedParams(input_fields, request)
-    company_id, audit_id = [validated_data[key] for key in input_fields.keys()]
+    company_id, audit_id = parse_validated_data(input_fields, validated_data)
 
-    audit = config_models.Engagement.objects.filter(Q(company__id=company_id) & Q(id=audit_id))
-    if len(audit) > 1:
-        raise Exception('Multiple results for single audit. Check for internal errors.')
-
-    audit = audit.first()
+    audit = config_models.Engagement.objects.filter(
+        Q(company__id=company_id) & Q(id=audit_id)).first()
     Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.AuditType,
                                                                     AuditSerializer.Fields.ClientType,
                                                                     AuditSerializer.Fields.ClientTypeId,
                                                                     AuditSerializer.Fields.StartTime,
-                                                                    AuditSerializer.Fields.EndTime])
+                                                                    AuditSerializer.Fields.EndTime,
+                                                                    ])
     json_response = Serializer(audit).data
     return Response(json_response)
 
 
 @api_view(["POST"])
 def addAudit(request):
-    input_fields = [SerializeColumn('CompanyId', fieldType = serializers.UUIDField, db_column_name='company'),
+    input_fields = [SerializeColumn('CompanyId', fieldType=serializers.UUIDField, db_column_name='company'),
                     SerializeColumn('AuditName', db_column_name='name'),
                     SerializeColumn('ClientType', db_column_name='client_type'),
                     SerializeColumn('AuditType', db_column_name='type'),
@@ -173,75 +172,293 @@ def addAudit(request):
                     SerializeColumn('EndTime', fieldType=serializers.DateField, db_column_name='end_Date'),
                     ]
     validated_data = getValidatedParams(input_fields, request)
-    print(validated_data)
+
     # Logical validations before creating a new audit.
     # Also contains code to override validated_data for ForeignKey Records.
-    success, response = auditCreationValidation(validated_data)
+    success, response = validations.auditCreationValidation(validated_data)
     if not success:
         return response
 
     audit = config_models.Engagement.objects.create(**response)
-    Serializer = AuditSerializer.generateSerializer(exclude_fields=[
-        AuditSerializer.Fields.CompanyId,
-        AuditSerializer.Fields.CompanyName,
-        AuditSerializer.Fields.AuditScore,
-        AuditSerializer.Fields.Channels,
-        AuditSerializer.Fields.ChannelCount
-
-    ])
+    Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.CompanyId,
+                                                                    AuditSerializer.Fields.CompanyName,
+                                                                    AuditSerializer.Fields.AuditScore,
+                                                                    AuditSerializer.Fields.Channels,
+                                                                    AuditSerializer.Fields.ChannelCount,
+                                                                    ])
     json_response = Serializer(audit).data
     return Response(json_response)
 
 
-class createEngagement(CreateAPIView):
-    serializer_class = EngagementSerializer
+@api_view(["POST"])
+def editAudit(request):
+    input_fields = [SerializeColumn('CompanyId', fieldType=serializers.UUIDField, db_column_name='company'),
+                    SerializeColumn('AuditId', fieldType=serializers.UUIDField, db_column_name='id'),
+                    SerializeColumn('AuditName', db_column_name='name', required=False),
+                    SerializeColumn('ClientType', db_column_name='client_type', required=False),
+                    SerializeColumn('AuditType', db_column_name='type', required=False),
+                    SerializeColumn('StartTime', fieldType=serializers.DateField,
+                                    db_column_name='start_Date', required=False),
+                    SerializeColumn('EndTime', fieldType=serializers.DateField,
+                                    db_column_name='end_Date', required=False),
+                    SerializeColumn('IsActive', fieldType=serializers.BooleanField,
+                                    db_column_name='is_active', required=False),
+                    ]
+    validated_data = getValidatedParams(input_fields, request)
 
-    def create(self, request):
-        if not request.user.is_authenticated:
-            raise exceptions.NotAuthenticated
+    # Logical validations before creating a new audit.
+    # Also contains code to override validated_data for ForeignKey Records.
+    success, response = validations.auditUpdateValidation(validated_data)
+    if not success:
+        return response
+    audit = response['audit']
 
-        company = getUserCompany(request)
-        if not company:
-            raise Exception('Developer Error!!! All user should contain company')
+    for keys in ['audit', 'id', 'company']:
+        del response[keys]
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(company=company)
-        return Response(serializer.data)
+    if not response:
+        return Response('No parameters passed to update', status=status.HTTP_400_BAD_REQUEST)
 
+    for attr, value in response.items():
+        setattr(audit, attr, value)
+    audit.save()
 
-@ api_view(["POST"])
-def deleteEngagement(request):
-    fetched, result = getEngagementById(request)
-    if not fetched:
-        return result
-    result.delete()
-    return Response('Engagement Deleted')
-
-
-@ api_view(["POST"])
-def editEngagement(request):
-    serializer = EngagementSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    fetched, result = getEngagementById(request)
-    if not fetched:
-        return result
-    new_engagement = result.update(**serializer.validated_data)
-    return dj_serializers.serialize('json', new_engagement)
+    Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.CompanyId,
+                                                                    AuditSerializer.Fields.CompanyName,
+                                                                    AuditSerializer.Fields.AuditScore,
+                                                                    AuditSerializer.Fields.Channels,
+                                                                    AuditSerializer.Fields.ChannelCount,
+                                                                    ])
+    json_response = Serializer(audit).data
+    return Response(json_response)
 
 
-@ api_view(['GET'])
-def companyEngagements(request):
-    if not request.user.is_authenticated:
-        raise exceptions.NotAuthenticated
-    company = getUserCompany(request)
+@api_view(["GET"])
+def deleteAudit(request):
+    input_fields = [SerializeColumn(name='CompanyId'),
+                    SerializeColumn(name="AuditId"),
+                    ]
 
+    validated_data = getValidatedParams(input_fields, request)
+    company_id, audit_id = parse_validated_data(input_fields, validated_data)
+    audit = config_models.Engagement.objects.filter(Q(company__id=company_id) & Q(id=audit_id)).first()
+    Serializer = AuditSerializer.generateSerializer()
+    audit_info = Serializer(audit).data
+    json_response = {'IsDeleted': True, 'AuditDetails': audit_info}
+    audit.delete()
+    return Response(json_response)
+
+
+@api_view(["GET"])
+def viewAuditInfo(request):
+    input_fields = [SerializeColumn(name='CompanyId'),
+                    SerializeColumn(name="AuditId"),
+                    ]
+
+    validated_data = getValidatedParams(input_fields, request)
+    company_id, audit_id = parse_validated_data(input_fields, validated_data)
+    audit = config_models.Engagement.objects.filter(Q(company__id=company_id) & Q(id=audit_id)).first()
+    Serializer = AuditSerializer.generateSerializer()
+    json_response = Serializer(audit).data
+    return Response(json_response)
+
+
+@api_view(["GET"])
+def inactiveateAuditInfo(request):
+    input_fields = [SerializeColumn(name='CompanyId'),
+                    SerializeColumn(name="AuditId"),
+                    ]
+
+    validated_data = getValidatedParams(input_fields, request)
+    company_id, audit_id = parse_validated_data(input_fields, validated_data)
+    audit = config_models.Engagement.objects.filter(Q(company__id=company_id) & Q(id=audit_id)).first()
+    audit.is_active = False
+    audit.save()
+    Serializer = AuditSerializer.generateSerializer()
+    json_response = Serializer(audit).data
+    return Response(json_response)
+
+
+@api_view(["GET"])
+def getAuditScore(request):
+    input_fields = [SerializeColumn('AuditId', fieldType=serializers.UUIDField)]
+    validated_data = getValidatedParams(input_fields, request)
+    audit_id = parse_validated_data(input_fields, validated_data)
+    audit = config_models.Engagement.objects.filter(Q(id=audit_id)).first()
+    Serializer = AuditSerializer.generateSerializer(fields=[AuditSerializer.Fields.AuditId,
+                                                            AuditSerializer.Fields.AuditScore,
+                                                            ])
+
+    json_response = Serializer(audit).data
+    return Response(json_response)
+
+
+@api_view(['GET'])
+def companyAuditStatusSummary(request):
+    input_fields = [SerializeColumn('CompanyId', fieldType=serializers.UUIDField)]
+    validated_data = getValidatedParams(input_fields, request)
+    company_id = parse_validated_data(input_fields, validated_data)
+    company = config_models.CompanyDetails.objects.filter(id=company_id).first()
     if not company:
-        raise Exception('Developer Error!!! All user should contain company')
+        return instanceNotFoundResponse('Company', 'CompanyId')
 
-    allEngagemnets = config_models.Engagement.objects.filter(company=company)
-    serializer = AuditResponseSerializer(allEngagemnets, many=True)
-    return Response(serializer.data)
+    audits = config_models.Engagement.objects.filter(Q(company=company))
+    in_progress = audits.filter(is_active=True).count()
+    closed = audits.count() - in_progress
+    company_complience = company.compliance_score
+    json_response = {
+        'InProgress': in_progress,
+        'Closed': closed,
+        'Complience': company_complience,
+    }
+    return Response(json_response)
+
+
+@api_view(['GET'])
+def companyAuditSummary(request):
+    input_fields = [SerializeColumn('CompanyId', fieldType=serializers.UUIDField)]
+    validated_data = getValidatedParams(input_fields, request)
+    company_id = parse_validated_data(input_fields, validated_data)
+    company = config_models.CompanyDetails.objects.filter(id=company_id).first()
+    if not company:
+        return instanceNotFoundResponse('Company', 'CompanyId')
+    audits = config_models.Engagement.objects.filter(Q(company=company))
+
+    # creating json object mannually as increasing fields in Audit serializer will increase generateSerializer exclude fields.
+    json_response = []
+    for audit in audits:
+        source_count = config_models.Channel.objects.filter(engagement=audit).count()
+        channel_types = config_models.ChannelType.objects.filter(engagement=audit)
+        channel_count = channel_types.count()
+        channel_type_count = 0
+        for channel_type in channel_types:
+            channel_type_count += config_models.ChannelName.objects.filter(channel_type_name=channel_type).count()
+        days_remaining = (audit.end_Date - audit.start_Date).days
+
+        audit_info = {
+            'ComapanyName': audit.company.name,
+            'ClientType': audit.client_type.name,
+            'DaysRemaining': days_remaining,
+            'ComplianceScore': audit.compliance_score,
+            'ChannelTypeCount': channel_type_count,
+            'ChannelCount': channel_count,
+            'SourceCount': source_count,
+        }
+        json_response.append(audit_info)
+    return Response(json_response)
+
+
+@api_view(["GET"])
+def filterAudit(request):
+    input_fields = [SerializeColumn('AuditType', fieldType=serializers.CharField)]
+    validated_data = getValidatedParams(input_fields, request)
+    audit_type = parse_validated_data(input_fields, validated_data)
+
+    audit_type_values = list(map(lambda x: x[1], config_models.PREDEFINED_AUDIT_TYPES))
+    if audit_type not in audit_type_values:
+        return instanceNotFoundResponse('AuditType', 'AuditType')
+
+    audit = config_models.Engagement.objects.filter(Q(type=audit_type))
+    Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.AuditType,
+                                                                    AuditSerializer.Fields.ClientType,
+                                                                    AuditSerializer.Fields.ClientTypeId,
+                                                                    AuditSerializer.Fields.StartTime,
+                                                                    AuditSerializer.Fields.EndTime,
+                                                                    ])
+    json_response = Serializer(audit, many=True).data
+    return Response(json_response)
+
+
+@api_view(["GET"])
+def searchAudit(request):
+    input_fields = [SerializeColumn('AuditName', fieldType=serializers.CharField)]
+    validated_data = getValidatedParams(input_fields, request)
+    audit_name = parse_validated_data(input_fields, validated_data)
+    audit = config_models.Engagement.objects.filter(Q(name__icontains=audit_name))
+    Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.AuditType,
+                                                                    AuditSerializer.Fields.ClientType,
+                                                                    AuditSerializer.Fields.ClientTypeId,
+                                                                    AuditSerializer.Fields.StartTime,
+                                                                    AuditSerializer.Fields.EndTime,
+                                                                    ])
+    json_response = Serializer(audit, many=True).data
+    return Response(json_response)
+
+
+@api_view(["GET"])
+def sortAudit(request):
+    input_fields = [SerializeColumn('CompanyId', fieldType=serializers.UUIDField),
+                    SerializeColumn('SortBy', fieldType=serializers.CharField),
+                    SerializeColumn('Ascending', fieldType=serializers.BooleanField, default=True)]
+
+    validated_data = getValidatedParams(input_fields, request)
+    company_id, sort_parameter, ascending = parse_validated_data(input_fields, validated_data)
+
+    # choices are mapped with database column names.
+    sort_choices = (('start_Date', 'AuditDate'), ('compliance_score', 'AuditScore'))
+    sort_parameter = validations.validateChoice('SortBy', sort_choices, sort_parameter)
+    sort_parameter = sort_parameter if ascending else f'-{sort_parameter}'  # add -FieldName for descending sort
+
+    audit = config_models.Engagement.objects.order_by(sort_parameter).filter(Q(company__id=company_id))
+    Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.AuditType,
+                                                                    AuditSerializer.Fields.ClientType,
+                                                                    AuditSerializer.Fields.ClientTypeId,
+                                                                    AuditSerializer.Fields.StartTime,
+                                                                    AuditSerializer.Fields.EndTime,
+                                                                    ])
+    json_response = Serializer(audit, many=True).data
+    return Response(json_response)
+
+
+# class createEngagement(CreateAPIView):
+#     serializer_class = EngagementSerializer
+
+#     def create(self, request):
+#         if not request.user.is_authenticated:
+#             raise exceptions.NotAuthenticated
+
+#         company = getUserCompany(request)
+#         if not company:
+#             raise Exception('Developer Error!!! All user should contain company')
+
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(company=company)
+#         return Response(serializer.data)
+
+
+# @ api_view(["POST"])
+# def deleteEngagement(request):
+#     fetched, result = getEngagementById(request)
+#     if not fetched:
+#         return result
+#     result.delete()
+#     return Response('Engagement Deleted')
+
+
+# @ api_view(["POST"])
+# def editEngagement(request):
+#     serializer = EngagementSerializer(data=request.data)
+#     serializer.is_valid(raise_exception=True)
+#     fetched, result = getEngagementById(request)
+#     if not fetched:
+#         return result
+#     new_engagement = result.update(**serializer.validated_data)
+#     return dj_serializers.serialize('json', new_engagement)
+
+
+# @ api_view(['GET'])
+# def companyEngagements(request):
+#     if not request.user.is_authenticated:
+#         raise exceptions.NotAuthenticated
+#     company = getUserCompany(request)
+
+#     if not company:
+#         raise Exception('Developer Error!!! All user should contain company')
+
+#     allEngagemnets = config_models.Engagement.objects.filter(company=company)
+#     serializer = AuditResponseSerializer(allEngagemnets, many=True)
+#     return Response(serializer.data)
 
 
 # class Engagements(RetrieveUpdateDestroyAPIView):

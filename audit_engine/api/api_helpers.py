@@ -4,9 +4,9 @@ from configuration import models as config_models
 
 
 class SerializeColumn:
-    def __init__(self, name, fieldType=serializers.CharField, db_column_name=None):
+    def __init__(self, name, fieldType=serializers.CharField, db_column_name=None, *args, **kwargs):
         self.key = name
-        self.value = fieldType()
+        self.value = fieldType(*args, **kwargs)
         self.db_column_name = db_column_name
         self.__validate()
 
@@ -16,10 +16,15 @@ class SerializeColumn:
         if self.db_column_name:
             assert isinstance(self.db_column_name, str) and self.db_column_name
 
-
+def parse_validated_data(input_fields, validated_data):
+    parse_fields =  [validated_data[column.db_column_name or  column.key] for column in input_fields]
+    if len(parse_fields) == 1:
+        return parse_fields[0]
+    return parse_fields
+    
 def getUserCompany(request, validate=True):
     '''Helps to simulate request even if user is not logged in. As Frontend is angular and auth
-    will take place with azure AD, validate=False will return some company instanse, if available.'''
+    will take place with azure AD, validate=False will return some company instance, if available.'''
     if validate:
         return request.user.company
     return config_models.CompanyDetails.objects.all().first()
@@ -38,7 +43,7 @@ def getEngagementById(request):
     return True, engagement
 
 
-def instanseNotFoundResponse(class_name, parameter='parameter'):
+def instanceNotFoundResponse(class_name, parameter='parameter'):
     return Response(f"Couldn't find a record for the {class_name}. Please ensure correct {parameter} is passed in payload.",
                     status=status.HTTP_400_BAD_REQUEST)
 
@@ -61,7 +66,10 @@ def getValidatedParams(params, request):
     if InputSerializer.has_mapped_columns:
         for column in params:
             if column.db_column_name:
-                value =  input_serializer.validated_data[column.key]
+                try:
+                    value = input_serializer.validated_data[column.key]
+                except KeyError:
+                    continue
                 input_serializer.validated_data[column.db_column_name] = value
                 del input_serializer.validated_data[column.key]
 

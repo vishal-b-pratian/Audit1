@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from content_management import models as content_models
 from configuration import models as config_models
 from django.core.validators import MinValueValidator, MaxValueValidator
-from jsonfield import JSONField
 
 # class AuditInformation(models.Model):
 #     channel_name = models.ForeignKey(
@@ -45,44 +44,44 @@ from jsonfield import JSONField
 
 
 class SourceParameterScore(models.Model):
-    source = models.ForeignKey(
-        config_models.ChannelSourceParameter, on_delete=models.CASCADE, related_name="parameter"
+    source = models.OneToOneField(
+        config_models.ChannelSourceParameter, on_delete=models.CASCADE, primary_key = True
     )
 
-    id = models.UUIDField(
-        default=uuid.uuid4,
-        verbose_name="Source Parameter Id",
-        primary_key=True,
-        editable=True,
-    )
-    keyword_count = models.IntegerField(verbose_name = 'Mapped Keyword Count', default = 0)
-    keyword_frequencies  = JSONField(default = '[]')
+    # id = models.UUIDField(
+    #     default=uuid.uuid4,
+    #     verbose_name="Source Parameter Id",
+    #     primary_key=True,
+    #     editable=True,
+    # )
+    # keyword_count = models.IntegerField(verbose_name = 'Mapped Keyword Count', default = 0)
+    # keyword_frequencies  = JSONField(default = '[]')
     parameter_score = models.FloatField(verbose_name="Parameter Score", default=0.0)
 
 
 class ChannelParameterScore(models.Model):
-    channel = models.ForeignKey(
+    channel = models.OneToOneField(
         config_models.ChannelParameter, on_delete=models.CASCADE, related_name="parameter"
     )
-    id = models.UUIDField(
-        default=uuid.uuid4,
-        verbose_name="Channel Parameter Id",
-        primary_key=True,
-        editable=True,
-    )
+    # id = models.UUIDField(
+    #     default=uuid.uuid4,
+    #     verbose_name="Channel Parameter Id",
+    #     primary_key=True,
+    #     editable=True,
+    # )
     parameter_score = models.FloatField(verbose_name="Parameter scores", default=0.0)
 
 
 class ChannelTypeParameterScore(models.Model):
-    channel_type = models.ForeignKey(
+    channel_type = models.OneToOneField(
         config_models.ChannelTypeParameter, on_delete=models.CASCADE, related_name="parameter"
     )
-    id = models.UUIDField(
-        default=uuid.uuid4,
-        verbose_name="ChannelType Parameter Id",
-        primary_key=True,
-        editable=True,
-    )
+    # id = models.UUIDField(
+    #     default=uuid.uuid4,
+    #     verbose_name="ChannelType Parameter Id",
+    #     primary_key=True,
+    #     editable=True,
+    # )
     parameter_score = models.FloatField(
         verbose_name="Parameter Score", default=0.0
     )

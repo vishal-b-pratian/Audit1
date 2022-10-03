@@ -22,9 +22,9 @@ class CompanyDetails(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(verbose_name="Is Active", default=True)
-    compliance_score = models.FloatField(verbose_name="Compliance Score", default=0)
+    compliance_score = models.FloatField(verbose_name="Present Compliance Score", default=0)
     previous_compliance_score = models.FloatField(
-        verbose_name="Compliance Score", default=0
+        verbose_name="Previous Compliance Score", default=-1
     )
 
     def __str__(self):
@@ -48,16 +48,14 @@ class Engagement(models.Model):
     name = models.CharField(max_length=100, default='')
     client_type = models.ForeignKey(to="ClientType", on_delete=models.PROTECT)
     company = models.ForeignKey("CompanyDetails", on_delete=models.CASCADE)
-    start_Date = models.DateField(auto_now_add=True)
+    start_Date = models.DateField(auto_now_add=True, verbose_name="Start Date")
     end_Date = models.DateField()
     is_active = models.BooleanField(verbose_name="Is Active", default=True)
     type = models.CharField(
         max_length=70,
         choices=PREDEFINED_AUDIT_TYPES)
-    compliance_score = models.FloatField(verbose_name="Compliance Score", default=0)
-    previous_compliance_score = models.FloatField(
-        verbose_name="Compliance Score", default=0
-    )
+    compliance_score = models.FloatField(verbose_name="Present Compliance Score", default=0)
+    previous_compliance_score = models.FloatField(verbose_name="Previous Compliance Score", default=-1)
 
     def __str__(self):
         return f"{self.company.name} - {self.type}"
@@ -167,10 +165,14 @@ class Channel(models.Model):
         on_delete=models.DO_NOTHING,
     )
     url = models.URLField(
-        verbose_name="Channel Url",
+        verbose_name="Channel Url", 
         max_length=200
     )
+
     is_active = models.BooleanField(default=True)
+    compliance_score = models.FloatField(verbose_name="Present Compliance Score", default=0)
+    previous_compliance_score = models.FloatField(verbose_name="Previous Compliance Score", default=-1)
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -232,3 +234,5 @@ class ChannelSourceParameter(models.Model):
         on_delete=models.DO_NOTHING
     )
     weight = models.FloatField()
+    def __str__(self):
+        return f'{self.parameters} | {self.weight} | {self.channel}'
