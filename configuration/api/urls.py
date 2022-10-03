@@ -22,6 +22,7 @@ urlpatterns = [
     path("activate_channel/",views.activateChannel,name = "activate_channel"),
     path("inactivate_channel/",views.inactivateChannel,name = "inactivate-channel"),
     path("activate_channel_type/",views.activateChannelType,name = "activate-channel-type"),
-    path("inactivate_channel_type/",views.inactivateChannelType,name = "inactivate-channel-type")
+    path("inactivate_channel_type/",views.inactivateChannelType,name = "inactivate-channel-type"),
+    path("view-message-architecture-content/<str:engagement_id>",views.viewMessageArchitectureContent,name ="view-message-architecture-content" )
     
 ]
