@@ -7,6 +7,7 @@ urlpatterns = [
     path("company-details/", views.getCompanyDetailsData, name="get-company-details"),
     path("channels/<str:company_name>", views.getChannelsData, name="get-channels"),
     path("addChannel/", views.addChannel, name="addChannel"),
+     path("add_channel_name/<str:channel_type_id>",views.addChannelName,name = "add-source"),
     path ("view_all_sources/<str:company_id>/",views.viewAllSources,name = "view-all-sources"),
 
     path ("view_source_by_id/<str:company_id>/<str:source_id>/",views.viewSourcebyID,name = "view-source-by-id"),
