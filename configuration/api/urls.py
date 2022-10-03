@@ -18,6 +18,10 @@ urlpatterns = [
     path("engagement-details/<str:company_id>", views.getEngagementDetails, name="get-company-details"),
     path("get_Urls_Channel_type/<str:company_name>/<str:engagement_type>/<str:channel_type>", views.getUrlDetailsChannelType, name="get-url-details-channelType"),
     path ("get_Urls_channels/<str:company_name>/<str:engagement_type>/<str:channel_name>",views.getUrlDetailsChannel,name = "get_url_details_channel"),
-    path ("add_channel_type/<str:engagement_id>",views.add_channel_type,name = "add_channel_type")
+    path ("add_channel_type/<str:engagement_id>",views.add_channel_type,name = "add_channel_type"),
+    path("activate_channel/",views.activateChannel,name = "activate_channel"),
+    path("inactivate_channel/",views.inactivateChannel,name = "inactivate-channel"),
+    path("activate_channel_type/",views.activateChannelType,name = "activate-channel-type"),
+    path("inactivate_channel_type/",views.inactivateChannelType,name = "inactivate-channel-type"),
     
 ]
