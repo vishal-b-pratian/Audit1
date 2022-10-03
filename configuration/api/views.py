@@ -285,7 +285,24 @@ def editSource(request):
         url=url,
     )
 
-    return Response("hii")    # print(Engagement)
+    return Response("hii") 
+    
+@api_view(["POST"])
+def add_channel_type(request,engagement_id):
+    channel_type = request.data.get('channel_type')
+    response = {}
+
+    channel_type_name = channel_type['channel_type_name']
+    channel_type_weightage = channel_type['channel_type_weightage']
+    engagement = config_models.Engagement.objects.get(id=engagement_id)
+    channel_type_object = config_models.ChannelType.objects.create(
+    channel_type=channel_type_name,
+    engagement=engagement,
+    channel_type_weightage= float(channel_type_weightage)
+    ).save()
+    response['channel_type'] = channel_type_object
+    return Response(response)
+       # print(Engagement)
     # end_date = dateTimeparser.parse(Engagement.get('end_Date'))
     # type = Engagement['type']
     # company_details = config_models.CompanyDetails.objects.get(name = Engagement.get('company'))
