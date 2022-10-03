@@ -23,7 +23,11 @@ def getRoutes(request):
         {"GET", "/api/company-details/<uuid:id>/"},
         {"GET / POST", "/api/create-channel/"},
         {"GET / POST", "/api/create-channel-data/"},
-        {"GET", "/api/engagement-details/"}
+        {"GET", "/api/engagement-details/"},
+        {"PATCH", "/api/activate-channel"},
+        {"PATCH", "/api/inactivate-channel"},
+        {"PATCH", "/api/activate-channel-type"},
+        {"PATCH", "/api/inactivate-channel-type"},
     ]
 
     return Response(routes)
@@ -302,23 +306,28 @@ def add_channel_type(request,engagement_id):
     ).save()
     response['channel_type'] = channel_type_object
     return Response(response)
-       # print(Engagement)
-    # end_date = dateTimeparser.parse(Engagement.get('end_Date'))
-    # type = Engagement['type']
-    # company_details = config_models.CompanyDetails.objects.get(name = Engagement.get('company'))
-    # # print(Engagement)
-    # engagement = config_models.Engagement.objects.create(company = company_details,type = type, end_Date = end_date)
-    # x = {}
-    # x['company'] = engagement.company.id
-    # x['start_Date'] = engagement.start_Date
-    # return Response(x)
-    
-# def addChannel(request):
-#     if request.method == "GET":
 
-#     else:
-#         serializer = config_serializers.ChannelSerializer(data = request.data.get('channel'))
-#         serializer .is_valid(raise_exception = True)
-#         serializer.save()
-#         return Response(serializer.validated_data)
+@api_view(["PATCH"])
+def activateChannel(request):
+    channel_details = config_models.Channel.objects.filter(id = request.data.get('Channel Id')).update(is_active = True)
+    response = "Message Channel Activated"
+    return Response(response)  
+
+@api_view(["PATCH"])
+def inactivateChannel(request):
+    channel_details = config_models.Channel.objects.filter(id = request.data.get('Channel Id')).update(is_active = False)
+    response = "Message Channel Inactivated"
+    return Response(response) 
+
+@api_view(["PATCH"])
+def activateChannelType(request):
+    channel_details = config_models.ChannelType.objects.filter(id = request.data.get('ChannelType Id')).update(is_active = True)
+    response = "ChannelType Activated"
+    return Response(response)
+
+@api_view(["PATCH"])
+def inactivateChannelType(request):
+    channel_details = config_models.ChannelType.objects.filter(id = request.data.get('ChannelType Id')).update(is_active = False)
+    response = "ChannelType Inactivated"
+    return Response(response)
 
