@@ -85,6 +85,7 @@ class AuditParameter(models.Model):
         verbose_name="Engagement Details",
         on_delete=models.DO_NOTHING
     )
+    parameter_content = models.TextField(verbose_name="Parameter content" , null=False , default="parameter content")
     parameter = models.CharField(verbose_name="Parameter Name", max_length=200)
     audit_weightage = models.FloatField(
         verbose_name="Audit Weightage",
