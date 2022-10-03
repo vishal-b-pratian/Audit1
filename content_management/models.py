@@ -4,6 +4,10 @@ from django.db import models
 
 
 class Links(models.Model):
+    '''
+    Model is used to store and relate source data from the configuration micro-service
+    channel ID from the Channel table from the configuration module is used as a forigen key 
+    '''
     channel = models.ForeignKey(to=config_models.Channel, on_delete = models.CASCADE)
     url = models.URLField()
     parameters = models.TextField(verbose_name='parameters',null= False)
@@ -12,22 +16,32 @@ class Links(models.Model):
         return self.channel.channel_name.channel_name
 
 class Content(models.Model):
+    
+    '''
+    Model is used to store data scraped from the source passed in configuration
+    one to one relation is established to entries in Links model
+    '''
+
     link = models.OneToOneField(
         Links,
         on_delete=models.CASCADE,
         primary_key=True
     )
-    #scraped content - whole page keywords - viewConten
+    #scraped content
     main_content=models.TextField(verbose_name='Main Content',null= False)
-
-    #number_of_words=models.IntegerField(verbose_name="Number Of Words",default=0)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.link)
+        return self.link.channel.channel_name
 
 class ContentFetchInfo(models.Model):
+
+    '''
+    Model is used to store processed words extrated from scraped data 
+    one to one relation is established with the Content model
+    '''
+
     content = models.OneToOneField(
         Content,
         on_delete=models.CASCADE,
@@ -43,15 +57,13 @@ class ContentFetchInfo(models.Model):
 
 
 class MappedKeyWords(models.Model):
-    content_info = models.OneToOneField(
-        ContentFetchInfo,
-        on_delete=models.CASCADE,
-        primary_key=True
-    )
+
     '''
+    Model is used to store a dictonary of count and a list of processed words that are mapped to audit parameter keywords
+    one to one relation is established with the ContentfetchInfo model
     Structure of json for mapped keywords
     {
-        'tagline': {
+        'audit-parrameter': {
             'keyword': {
                 'louisiana': {
                     'similar': [],
@@ -65,6 +77,12 @@ class MappedKeyWords(models.Model):
         }
     }
     '''
+
+    content_info = models.OneToOneField(
+        ContentFetchInfo,
+        on_delete=models.CASCADE,
+        primary_key=True
+    )
     mapped_keywords = models.TextField(verbose_name='Mapped keywords',null= False)
     mapped_keywords_count = models.IntegerField(verbose_name = "No. of Mapped Words", null = True)
     created = models.DateTimeField(auto_now_add=True)
@@ -75,6 +93,12 @@ class MappedKeyWords(models.Model):
 
 
 class UnmappedKeywords(models.Model):
+    
+    '''
+    Model is used to store a list of audit parameter keywords that weren't mapped to any processed words
+    one to one relation is established with the ContentfetchInfo model
+    '''
+
     content_info = models.OneToOneField(
         ContentFetchInfo,
         on_delete=models.CASCADE,

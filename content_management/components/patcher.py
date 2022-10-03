@@ -8,7 +8,6 @@ This file is used for monkey patching to change the way the
 snscrape handles its request.
 """
 
-
 def scraping_request(
     self,
     method,
