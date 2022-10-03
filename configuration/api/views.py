@@ -24,10 +24,11 @@ def getRoutes(request):
         {"GET / POST", "/api/create-channel/"},
         {"GET / POST", "/api/create-channel-data/"},
         {"GET", "/api/engagement-details/"},
-        {"PATCH", "/api/activate-channel"},
-        {"PATCH", "/api/inactivate-channel"},
-        {"PATCH", "/api/activate-channel-type"},
-        {"PATCH", "/api/inactivate-channel-type"},
+        {"PATCH", "/api/activate-channel/"},
+        {"PATCH", "/api/inactivate-channel/"},
+        {"PATCH", "/api/activate-channel-type/"},
+        {"PATCH", "/api/inactivate-channel-type/"},
+        {"GET", "/api/view-message-architecture-content/"}
     ]
 
     return Response(routes)
