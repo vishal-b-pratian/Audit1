@@ -179,6 +179,8 @@ class Channel(models.Model):
 
 
 class ChannelName(models.Model):
+    class Meta:
+        unique_together = ['channel_type_name',"channel_name"]
     channel_type_name = models.ForeignKey(
         to ="ChannelType",
         on_delete = models.DO_NOTHING)

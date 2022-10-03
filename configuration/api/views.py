@@ -1,4 +1,6 @@
 from random import sample
+from symbol import parameters
+from urllib import response
 from configuration.models import Engagement
 from django.core import serializers
 from django.http import JsonResponse
@@ -47,12 +49,36 @@ def getCompanyDetailsData(request):
 
 
 @api_view(["GET"])
-def getEngagementDetails(request,company_name):
+def getEngagementDetails(request,company_id):
+    response = {}
+    company = config_models.CompanyDetails.objects.get(id = company_id)
+    engagement_details = config_models.Engagement.objects.filter(company = company)
+    for engagement in engagement_details:
+        channel_types_list=[]
+        response['engagement'] = engagement.type
+        channel_types = config_models.ChannelType.objects.filter(engagement=engagement)
+        for channel_type in channel_types.values():
+            channel_types_list.append(channel_type['channel_type'])
+            response['channel-types'] = channel_types_list
+        response['channel_type_count'] = len(response['channel-types'])
+        for channelType in channel_types:
+            channels = config_models.Channel.objects.filter(type_name = channelType)
+            channel_list = []
+            parameters_list = []
+            for channel in channels.values():
+                parameters = config_models.ChannelSourceParameter.objects.filter(channel=channel['id'])
+                
+                for parameter in parameters.values():
+                    audit_parameter = config_models.AuditParameter.objects.get(id = parameter['parameters_id'])
+                    print(audit_parameter)
+                    parameters_list.append([audit_parameter.parameter,parameter['weight']])
+                   
+                channel_list.append([channel['id'],channel['channel_title'],channel['is_active'],parameters_list])
+                response[str(channelType)]= {str(channel['channel_name_id']):channel_list}
 
-    engagement_details = config_models.ChannelType.objects.all()
-    serializer = config_serializers.ChannelTypeSerializer(engagement_details, many=True)
-    print(serializer)
-    return Response(serializer.data)
+
+
+    return Response(response)
 
 
 
@@ -98,14 +124,168 @@ def getChannelsData(request,company_name):
     return Response(serializer_data)
 
 @api_view(["POST"])
-def addEngagement(request):
-    # Engagement = request.data.get('engagement')
-    serializer = config_serializers.EngagementSerializer(data = request.data.get('engagement'))
-    serializer.is_valid(raise_exception = True)
-    serializer.save()
-    return Response(serializer.validated_data)
+def addChannel(request):
+    channel = request.data.get('channel')
+    engagement_id = channel['engagement_id']
+    channel_type_id = channel['channel_type_id']
+    channel_title = channel['channel_title']
+    parameters = channel['parameters']
+    url = channel['url']
+    engagement = config_models.Engagement.objects.get(id = engagement_id)
+    channel_type = config_models.ChannelType.objects.get(id = channel_type_id) 
+    print(parameters.items())
+    channel = config_models.Channel(engagement=engagement,type_name = channel_type,channel_title=channel_title,url =url)
+    for parameter_it,weight_it in parameters.items():
+        parameter_instance = config_models.AuditParameter.objects.get(engagement= engagement, parameter = parameter_it)
+        channelSourceParameter = config_models.ChannelSourceParameter(parameters = parameter_instance,weight= float(weight_it),engagement=engagement)
 
-    # print(Engagement)
+    response={'channel':channel,
+    'channelSourceParameter':channelSourceParameter}
+
+
+    return Response(response)
+
+@api_view(["GET"])
+def viewAllSources(request, company_id):
+
+    response = {}
+    company_details = config_models.CompanyDetails.objects.get(id = company_id)
+    if company_details:
+        response['company_id'] = company_id
+    engagement_details = config_models.Engagement.objects.filter(company = company_details)
+    sources = []
+    source_id = []
+    channel_type_id = []
+    channel_type_name = []
+    source_status = []
+    
+    for engagement in engagement_details:
+        url = config_models.Channel.objects.filter(engagement = engagement)
+        for i in url:
+            if i.url:
+                source_id.append(str(i.id))
+                sources.append(i.url)
+                channel_type_id.append(i.type_name.id)
+                channel_type_name.append(i.type_name.channel_type)
+                source_status.append(i.is_active)
+
+    for i in range(len(source_id)):
+        response[source_id[i]] = {}
+        response[source_id[i]]["url"] = sources[i]
+        response[source_id[i]]["channel_type_id"] = channel_type_id[i]
+        response[source_id[i]]["channel_type"] = channel_type_name[i]
+        response[source_id[i]]["status"] = source_status[i]
+
+    return Response(response)
+
+
+@api_view(["GET"])
+def viewSourcebyID(request, company_id, source_id):
+
+    response = {}
+    company_details = config_models.CompanyDetails.objects.get(id = company_id)
+    if company_details:
+        response['company_id'] = company_id
+    url = config_models.Channel.objects.get(id = source_id)
+
+    if url:
+        sources = url.url
+        channel_type_id = url.type_name.id
+        channel_type_name = url.type_name.channel_type
+        source_status = url.is_active
+    response[source_id] = {}
+    response[source_id]["url"] = sources
+    response[source_id]["channel_type_id"] = channel_type_id
+    response[source_id]["channel_type"] = channel_type_name
+    response[source_id]["status"] = source_status
+    
+    return Response(response)
+
+
+@api_view(["POST"])
+def addSource(request):
+    company_id = request.data.get("company_id")
+    engagement_id = request.data.get("engagement_id")
+    channel_name = request.data.get("channel_name")
+    channel_type = request.data.get("channel_type")
+    url = request.data.get("link")
+
+    company = config_models.CompanyDetails.objects.get(id=company_id)
+    engagement = config_models.Engagement.objects.get(id=engagement_id)
+
+    config_models.ChannelType.objects.update_or_create(
+        channel_type=channel_type,
+        engagement=engagement,
+    )
+
+    channel_type_object = config_models.ChannelType.objects.get(
+        channel_type=channel_type, 
+        engagement=engagement
+    )
+
+    config_models.ChannelName.objects.update_or_create(
+        channel_type_name=channel_type_object,
+        channel_name=channel_name,
+    )
+
+    channel_name_object = config_models.ChannelName.objects.get(
+        channel_name=channel_name,
+        channel_type_name=channel_type_object
+    )
+
+    config_models.Channel.objects.create(
+        channel_name=channel_name_object,
+        type_name=channel_type_object,
+        engagement=engagement,
+        url=url,
+    ).save()
+
+    return Response("hii")
+
+
+@api_view(["PUT"])
+def editSource(request):
+    company_id = request.data.get("company_id")
+    engagement_id = request.data.get("engagement_id")
+    channel_name = request.data.get("channel_name")
+    channel_type = request.data.get("channel_type")
+    url_id = request.data.get("link_id") 
+    url = request.data.get("link")
+
+    company = config_models.CompanyDetails.objects.get(id=company_id)
+    engagement = config_models.Engagement.objects.get(id=engagement_id)
+
+    config_models.ChannelType.objects.update_or_create(
+        channel_type=channel_type,
+        engagement=engagement,
+    )
+
+    channel_type_object = config_models.ChannelType.objects.get(
+        channel_type=channel_type, 
+        engagement=engagement
+    )
+
+    config_models.ChannelName.objects.update_or_create(
+        channel_type_name=channel_type_object,
+        channel_name=channel_name,
+    )
+
+    channel_name_object = config_models.ChannelName.objects.get(
+        channel_name=channel_name,
+        channel_type_name=channel_type_object
+    )
+
+
+    config_models.Channel.objects.filter(
+        id = url_id
+    ).update(
+        channel_name=channel_name_object,
+        type_name=channel_type_object,
+        engagement=engagement,
+        url=url,
+    )
+
+    return Response("hii")    # print(Engagement)
     # end_date = dateTimeparser.parse(Engagement.get('end_Date'))
     # type = Engagement['type']
     # company_details = config_models.CompanyDetails.objects.get(name = Engagement.get('company'))
