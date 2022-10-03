@@ -29,6 +29,7 @@ def getRoutes(request):
         {"PATCH", "/api/activate-channel-type/"},
         {"PATCH", "/api/inactivate-channel-type/"},
         {"GET", "/api/view-message-architecture-content/"}
+        {"POST", "/api/add-channel-name"}
     ]
 
     return Response(routes)
@@ -307,6 +308,16 @@ def add_channel_type(request,engagement_id):
     ).save()
     response['channel_type'] = channel_type_object
     return Response(response)
+
+@api_view(["POST"])
+def addChannelName(request,channel_type_id):
+    channel_name = request.data.get("channel_name")
+    channel_type_object = config_models.ChannelType.objects.get(
+    id=channel_type_id
+    )
+    channel_name_created = config_models.ChannelName.objects.create(channel_type_name = channel_type_object,channel_name=channel_name).save()
+    print(channel_name_created)
+    return Response("succesful")
 
 @api_view(["PATCH"])
 def activateChannel(request):
