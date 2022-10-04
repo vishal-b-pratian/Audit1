@@ -1,5 +1,5 @@
 from django.core import serializers as dj_serializers
-from rest_framework import exceptions
+from rest_framework import exceptions, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.generics import CreateAPIView
@@ -18,12 +18,17 @@ from audit_engine import models as audit_models
 
 @api_view(['GET'])
 def getAuditDetails(request):
-    fetched, engagement = api_helpers.getEngagementById(request)
-    if not fetched:
-        return engagement
+    audit_id = request.GET.get('AuditId', None)
+    if not audit_id:
+        return Response('Audit Id not passed in parameter', status=status.HTTP_400_BAD_REQUEST)
+
+    engagement = config_models.Engagement.objects.filter(id =  audit_id).first()
+    if not engagement:
+        return api_helpers.instanceNotFoundResponse('Audit', 'AuditId')
+    
     channel_types = config_models.ChannelType.objects.filter(engagement=engagement)
     channel_type_data = []
-
+    
     for channel_type in channel_types:
         channel_data = {'channel_type_id': channel_type.id,
                         'channel_type_name': channel_type.channel_type, 'channels': []}

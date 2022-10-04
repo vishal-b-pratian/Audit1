@@ -90,17 +90,17 @@ WSGI_APPLICATION = "posmos.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'audit',
-        'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
+        'NAME': 'POSMO_audit_module',
+        'USER': 'adminroot',
+        'PASSWORD': 'password@123',
+        'HOST': 'inventory.postgres.database.azure.com',
         'PORT': '5432',
     }
 }
 
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'sql_server.pyodbc',
+#         'ENGINE': 'sqclsl_server.pyodbc',
 #         'NAME': 'mydb',
 #         'USER': 'posmos@myserver',
 #         'PASSWORD': 'Pos@1234',

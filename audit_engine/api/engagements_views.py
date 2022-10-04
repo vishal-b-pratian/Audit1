@@ -1,4 +1,5 @@
 import enum
+import datetime
 
 from django.db.models import Q
 from django.core import serializers as dj_serializers
@@ -126,6 +127,23 @@ class AuditSerializer:
 
 
 @api_view(['GET'])
+def getCompanyAuditScore(request):
+    input_fields = [SerializeColumn(name='CompanyId')]
+    validated_data = getValidatedParams(input_fields, request)
+    company_id = parse_validated_data(input_fields, validated_data)
+    company = config_models.CompanyDetails.objects.filter(Q(id=company_id)).first()
+    if not company:
+        return instanceNotFoundResponse('Company', 'CompanyId')
+    json_response = {
+        'current_score' : company.compliance_score,
+        'previous_score': company.previous_compliance_score,
+    }
+    return Response(json_response)
+
+
+
+
+@api_view(['GET'])
 def getAllAudits(request):
     input_fields = [SerializeColumn(name='CompanyId')]
     validated_data = getValidatedParams(input_fields, request)
@@ -244,8 +262,10 @@ def deleteAudit(request):
     audit = config_models.Engagement.objects.filter(Q(company__id=company_id) & Q(id=audit_id)).first()
     Serializer = AuditSerializer.generateSerializer()
     audit_info = Serializer(audit).data
-    json_response = {'IsDeleted': True, 'AuditDetails': audit_info}
-    audit.delete()
+    is_audit_available = bool(audit_info)
+    json_response = {'IsDeleted': is_audit_available, 'AuditDetails': audit_info}
+    if audit:
+        audit.delete()
     return Response(json_response)
 
 
@@ -333,10 +353,12 @@ def companyAuditSummary(request):
         channel_type_count = 0
         for channel_type in channel_types:
             channel_type_count += config_models.ChannelName.objects.filter(channel_type_name=channel_type).count()
-        days_remaining = (audit.end_Date - audit.start_Date).days
+        days_remaining = (audit.end_Date - datetime.datetime.now().date()).days + 1
+        days_remaining = f"Completed {-days_remaining} Ago" if days_remaining <= 0 else f"Days Remaining {days_remaining +1}"
 
         audit_info = {
             'ComapanyName': audit.company.name,
+            'AuditName': audit.name,
             'ClientType': audit.client_type.name,
             'DaysRemaining': days_remaining,
             'ComplianceScore': audit.compliance_score,
@@ -359,7 +381,7 @@ def filterAudit(request):
         return instanceNotFoundResponse('AuditType', 'AuditType')
 
     audit = config_models.Engagement.objects.filter(Q(type=audit_type))
-    Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.AuditType,
+    Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.Channels,
                                                                     AuditSerializer.Fields.ClientType,
                                                                     AuditSerializer.Fields.ClientTypeId,
                                                                     AuditSerializer.Fields.StartTime,
@@ -371,10 +393,12 @@ def filterAudit(request):
 
 @api_view(["GET"])
 def searchAudit(request):
-    input_fields = [SerializeColumn('AuditName', fieldType=serializers.CharField)]
+    input_fields = [SerializeColumn('CompanyId', fieldType=serializers.UUIDField),
+                    SerializeColumn('AuditName', fieldType=serializers.CharField),
+                    ]
     validated_data = getValidatedParams(input_fields, request)
-    audit_name = parse_validated_data(input_fields, validated_data)
-    audit = config_models.Engagement.objects.filter(Q(name__icontains=audit_name))
+    company_id, audit_name = parse_validated_data(input_fields, validated_data)
+    audit = config_models.Engagement.objects.filter(Q(company__id=company_id) & Q(name__icontains=audit_name))
     Serializer = AuditSerializer.generateSerializer(exclude_fields=[AuditSerializer.Fields.AuditType,
                                                                     AuditSerializer.Fields.ClientType,
                                                                     AuditSerializer.Fields.ClientTypeId,

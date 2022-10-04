@@ -27,7 +27,7 @@ def auditCreationValidation(data):
 
     # Client Type should already exist in the table
     client_type_object = config_models.ClientType.objects.filter(name=client_type).first()
-    if not client_type:
+    if not client_type_object:
         return False, instanceNotFoundResponse('ClientType')
     data['client_type'] = client_type_object
 
@@ -38,8 +38,8 @@ def auditCreationValidation(data):
 
     # Same company should not have multiple similar audit type
     company_audits_count = config_models.Engagement.objects.filter(company=company_object, type=audit_type).count()
-    if company_audits_count:
-        return False, Response("Cannot create multiple audits with same audit type within a company.", status=status.HTTP_400_BAD_REQUEST)
+    # if company_audits_count:
+    #     return False, Response("Cannot create multiple audits with same audit type within a company.", status=status.HTTP_400_BAD_REQUEST)
 
     if datetime.datetime.now().date() > start_date:
         return False, Response("StartDate can't be less than today's date.", status=status.HTTP_400_BAD_REQUEST)
@@ -89,8 +89,8 @@ def auditUpdateValidation(data):
 
     # Same company should not have multiple similar audit type
     company_audits_count = config_models.Engagement.objects.filter(company=company_object, type=audit_type).count()
-    if company_audits_count:
-        return False, Response("Cannot create multiple audits with same audit type within a company.", status=status.HTTP_400_BAD_REQUEST)
+    # if company_audits_count:
+    #     return False, Response("Cannot create multiple audits with same audit type within a company.", status=status.HTTP_400_BAD_REQUEST)
 
     # Skipping start and end date validation for being >= Today's date in update. Need further info.
 

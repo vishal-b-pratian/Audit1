@@ -13,7 +13,23 @@ from . import api_helpers
 @api_view(["GET"])
 def getRoutes(request):
 
-    routes = {"GET": "/api/sdfskd"}
+    routes = [{"GET": "/api/sdfskd"},
+              {"GET": "/api/getCompanyAuditScore"},
+              {"GET": "/api/getAllAudits"},
+              {"GET": "/api/viewAuditSummary"},
+              {"POST": "/api/addAudit"},
+              {"POST": "/api/editAudit"},
+              {"GET": "/api/deleteAudit"},
+              {"GET": "/api/viewAuditInfo"},
+              {"GET": "/api/inactiveAuditInfo"},
+              {"GET": "/api/getAuditScore"},
+              {"GET": "/api/companyAuditStatusSummary"},
+              {"GET": "/api/companyAuditSummary"},
+              {"GET": "/api/filterAudit"},
+              {"GET": "/api/searchAudit"},
+              {"GET": "/api/sortAudit"},
+              {"GET": "/api/triggerScoreGeneration"
+              }]
 
     return Response((routes))
 
@@ -30,7 +46,8 @@ def getStatus(request):
 
     for audit in audits:
         # Wait for the day to end to show Completed status.
-        formatted_end_date = datetime.datetime.combine(audit.end_Date, datetime.time(23,59,59,999999, datetime.timezone.utc))
+        formatted_end_date = datetime.datetime.combine(
+            audit.end_Date, datetime.time(23, 59, 59, 999999, datetime.timezone.utc))
         if formatted_end_date > datetime.datetime.now(datetime.timezone.utc):
             status["In progress"] += 1
         else:
@@ -53,8 +70,7 @@ def getOverallScore(request):
 
     return Response((api_response))
 
+
 class getEngagements(ListAPIView):
     queryset = config_model.Engagement.objects.all()
     serializer_class = serializers.AllEngagementsSerializer
-
-

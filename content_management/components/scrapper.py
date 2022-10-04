@@ -69,14 +69,14 @@ class Scrapper:
         return tweets
 
     def scrapeURL(self, url: str):
-        url_type = self.__validateURL(url)
-        if not url_type:
-            raise Exception  # Write custom exception.
-        if url_type == "twitter":
-            data = self.scrapeTwitter(url)
-        else:
-            data = self.__fetch_data(url)
-
+        # url_type = self.__validateURL(url)
+        # if not url_type:
+        #     raise Exception  # Write custom exception.
+        # if url_type == "twitter":
+        #     data = self.scrapeTwitter(url)
+        # else:
+        #     data = self.__fetch_data(url)
+        data = self.__fetch_data(url)
         return data
 
 

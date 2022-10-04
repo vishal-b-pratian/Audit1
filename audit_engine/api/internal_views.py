@@ -78,7 +78,7 @@ def calculateScore(source_parameters, content_mapped_keywords):
         parameter_name = src_parameter.parameters.parameter
         parameter_keywords = list(map(lambda x: x.strip(), src_parameter.parameters.keyword.split(',')))
         assert parameter_name in content_mapped_keywords
-        content_keyword_map = content_mapped_keywords[parameter_name]['keyword']
+        content_keyword_map = content_mapped_keywords[parameter_name]['keywords']
         parameter_score = convertScoreToPercent(calculateParameterScore(parameter_keywords, content_keyword_map))
         score_by_parameter.append(parameter_score)
     return score_by_parameter
@@ -98,7 +98,7 @@ def createParameterScoreRecord(score_by_parameter, source_parameters):
 
 
 def refreshScoreForCompany(channel):
-    '''Traverses Up and down the table chain and refreshs parameter scores across all related tables.'''
+    '''Traverses Up and down the table chain and refresh's parameter scores across all related tables.'''
     # update channel scores based on channelParameters.
     sourceParameters = config_models.ChannelSourceParameter.objects.filter(channel=channel)
     # remove source parameters for which sourceParameterScore has not been generated.

@@ -1,5 +1,7 @@
 from django.urls import path, include
+from . import views
 
 urlpatterns = [
-    # path("api/", include("configuration.api.urls")),
+    path("api/", include("configuration.api.urls")),
+    path("", views.home_page)
 ]
